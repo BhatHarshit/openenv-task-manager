@@ -1,0 +1,4 @@
+name: task-manager-env
+description: A simple task completion reinforcement learning environment
+
+entry_point: env.environment:TaskEnv
