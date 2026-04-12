@@ -16,3 +16,5 @@ This project implements a simple reinforcement learning environment where an age
 ## How to Run
 ```bash
 python inference.py
+
+update trigger
