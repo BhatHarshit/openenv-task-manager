@@ -1,4 +1,4 @@
-pydantic
 openai
-huggingface_hub
 fastapi
+uvicorn
+pydantic

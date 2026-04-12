@@ -1,21 +1,27 @@
+from typing import List
+
+
 class TaskEnv:
     def __init__(self):
-        self.tasks = []
-        self.completed = []
+        self.tasks: List[str] = []
+        self.completed: List[str] = []
+        self.total_tasks: int = 0
 
-    def reset(self, difficulty="easy"):
+    def reset(self, difficulty: str = "easy"):
         if difficulty == "easy":
             self.tasks = ["email"]
         elif difficulty == "medium":
             self.tasks = ["email", "meeting"]
         elif difficulty == "hard":
             self.tasks = ["email", "meeting", "code"]
+        else:
+            raise ValueError(f"Invalid difficulty: {difficulty}")
 
         self.completed = []
-
+        self.total_tasks = len(self.tasks)
         return self._get_state()
 
-    def step(self, action):
+    def step(self, action: str):
         reward = 0
 
         if action in self.tasks:
@@ -28,12 +34,17 @@ class TaskEnv:
         done = len(self.tasks) == 0
 
         if done:
-            reward += 2  # bonus for finishing all tasks
+            reward += 2
 
-        return self._get_state(), reward, done, {}
+        score = len(self.completed) / self.total_tasks if self.total_tasks > 0 else 0.0
+
+        return self._get_state(), reward, done, {"score": round(score, 2)}
 
     def _get_state(self):
         return {
-            "remaining_tasks": self.tasks,
-            "completed_tasks": self.completed
+            "remaining_tasks": self.tasks.copy(),
+            "completed_tasks": self.completed.copy()
         }
+
+    def state(self):
+        return self._get_state()

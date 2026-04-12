@@ -1,4 +1,41 @@
 name: task-manager-env
-description: A simple task completion reinforcement learning environment
+description: A simple task completion reinforcement learning environment with 3 difficulty levels (easy → hard) and OpenEnv-compliant typed models.
 
 entry_point: env.environment:TaskEnv
+
+# Optional metadata for OpenEnv validation
+version: 1.0
+author: Your Name
+license: MIT
+
+# Define action and observation spaces for clarity
+action_space:
+  type: list
+  description: Possible actions the agent can take.
+  values:
+    - email
+    - meeting
+    - code
+
+observation_space:
+  type: dict
+  description: Current environment state returned by state()
+  keys:
+    remaining_tasks:
+      type: list
+      description: Tasks not yet completed
+      values: [email, meeting, code]
+    completed_tasks:
+      type: list
+      description: Tasks already completed
+      values: [email, meeting, code]
+
+# Optional: recommended max episode length
+max_episode_steps: 10
+
+# Optional: environment tags
+tags:
+  - openenv
+  - task-manager
+  - rl
+  - demo
