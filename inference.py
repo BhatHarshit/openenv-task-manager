@@ -1,18 +1,27 @@
 from env.environment import TaskEnv
 import os
-from openai import OpenAI
+
+# ✅ SAFE IMPORT
+try:
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
+except:
+    OPENAI_AVAILABLE = False
+
 
 def run():
-    # ✅ MUST USE THESE (from hackathon)
+    # ✅ ENV VARIABLES
     API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
     API_KEY = os.getenv("API_KEY", "dummy-key")
     MODEL_NAME = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
 
-    # ✅ OpenAI client
-    client = OpenAI(
-        base_url=API_BASE_URL,
-        api_key=API_KEY
-    )
+    # ✅ SAFE CLIENT INIT
+    client = None
+    if OPENAI_AVAILABLE:
+        client = OpenAI(
+            base_url=API_BASE_URL,
+            api_key=API_KEY
+        )
 
     env = TaskEnv()
     state = env.reset("hard")
@@ -27,34 +36,35 @@ def run():
     while not done and steps < 5:
         steps += 1
 
-        error_msg = None  # ✅ track error
+        error_msg = "null"
 
-        # ✅ TRY/CATCH STARTS HERE
-        try:
-            response = client.chat.completions.create(
-                model=MODEL_NAME,
-                messages=[
-                    {"role": "system", "content": "You are a task manager agent. Choose one action: email, meeting, code."},
-                    {"role": "user", "content": f"Remaining tasks: {state['remaining_tasks']}. What should be done next? Reply with only one word."}
-                ]
-            )
+        # ✅ SAFE LLM BLOCK
+        if OPENAI_AVAILABLE and client:
+            try:
+                response = client.chat.completions.create(
+                    model=MODEL_NAME,
+                    messages=[
+                        {"role": "system", "content": "You are a task manager agent. Choose one action: email, meeting, code."},
+                        {"role": "user", "content": f"Remaining tasks: {state['remaining_tasks']}. What should be done next? Reply with only one word."}
+                    ]
+                )
+                action = response.choices[0].message.content.strip().lower()
+            except Exception as e:
+                action = "email"
+                error_msg = str(e)
+        else:
+            # ✅ FALLBACK IF OPENAI NOT AVAILABLE
+            action = "email"
+            error_msg = "openai_not_available"
 
-            action = response.choices[0].message.content.strip().lower()
-
-        except Exception as e:
-            action = "email"  # ✅ fallback action
-            error_msg = str(e)
-
-        # safety fallback
+        # ✅ SAFETY CHECK
         if action not in ["email", "meeting", "code"]:
             action = "email"
 
         next_state, reward, done, _ = env.step(action)
-
         total_reward += reward
 
-        # ✅ STEP log WITH error field
-        print(f"[STEP] step={steps} action={action} reward={reward:.2f} done={str(done).lower()} error={error_msg if error_msg else 'null'}")
+        print(f"[STEP] step={steps} action={action} reward={reward:.2f} done={str(done).lower()} error={error_msg}")
 
         state = next_state
 
